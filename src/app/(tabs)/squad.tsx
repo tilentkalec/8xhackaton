@@ -2,14 +2,15 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import { C, S, F } from '@/lib/theme';
-import { DEMO } from '@/lib/constants';
+import { useCurrentPot } from '@/lib/currentPot';
 import { usePotRealtime } from '@/hooks/usePotRealtime';
 import { emojiFor, archetypeFor } from '@/lib/avatars';
 import { gbp } from '@/lib/format';
 
 export default function SquadScreen() {
   const insets = useSafeAreaInsets();
-  const { members } = usePotRealtime(DEMO.POT_ID);
+  const { potId } = useCurrentPot();
+  const { members } = usePotRealtime(potId);
 
   // Rank by who's holding and how much they stand to win — never by income.
   const ranked = [...members].sort((a, b) => {

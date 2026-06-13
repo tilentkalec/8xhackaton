@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring } from 'react-native-reanimated';
 
@@ -8,6 +10,7 @@ import { C, S, F } from '@/lib/theme';
 import { DEMO } from '@/lib/constants';
 import { gbp } from '@/lib/format';
 import { useSession } from '@/lib/session';
+import { useCurrentPot } from '@/lib/currentPot';
 import { usePotRealtime } from '@/hooks/usePotRealtime';
 import { recordTransaction, resolveWindowEnd, checkIn } from '@/lib/logic';
 import { resetDemo } from '@/lib/demo';
@@ -27,7 +30,8 @@ interface Coin {
 export default function PotScreen() {
   const insets = useSafeAreaInsets();
   const { userId, name, emoji, toggle } = useSession();
-  const { pot, members, events, loading } = usePotRealtime(DEMO.POT_ID);
+  const { potId } = useCurrentPot();
+  const { pot, members, events, loading } = usePotRealtime(potId);
 
   const positions = useRef<Record<string, Center>>({});
   const prevMembers = useRef<MemberWithUser[]>([]);
@@ -80,7 +84,7 @@ export default function PotScreen() {
   async function onCheckIn() {
     btnScale.value = withSequence(withSpring(0.92), withSpring(1.06), withSpring(1));
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    await checkIn(DEMO.POT_ID, userId, name).catch(() => {});
+    await checkIn(potId, userId, name).catch(() => {});
   }
 
   if (loading || !pot) {
@@ -101,10 +105,24 @@ export default function PotScreen() {
           <Text style={styles.potName}>{pot.name}</Text>
           <Text style={styles.goal}>{pot.goal_label}</Text>
         </View>
-        <Pressable onPress={toggle} style={styles.youChip}>
-          <Text style={styles.youEmoji}>{emoji === 'fox' ? '🦊' : '🐢'}</Text>
-          <Text style={styles.youName}>{name}</Text>
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => {
+              const url = Linking.createURL(`/join/${pot.invite_code}`);
+              Share.share({ message: `Join my Pots bet: ${pot.invite_code}\n${url}` }).catch(() => {});
+            }}
+            style={styles.iconBtn}
+            hitSlop={8}>
+            <Text style={styles.iconGlyph}>🔗</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/create')} style={styles.iconBtn} hitSlop={8}>
+            <Text style={styles.iconGlyph}>＋</Text>
+          </Pressable>
+          <Pressable onPress={toggle} style={styles.youChip}>
+            <Text style={styles.youEmoji}>{emoji === 'fox' ? '🦊' : '🐢'}</Text>
+            <Text style={styles.youName}>{name}</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* pot total hero */}
@@ -115,6 +133,10 @@ export default function PotScreen() {
           {members.filter((m) => m.status === 'active').length} holding · {members.filter((m) => m.status === 'broken').length} broke
         </Text>
       </View>
+
+      <Pressable style={styles.quizLink} onPress={() => router.push('/onboarding')}>
+        <Text style={styles.quizLinkText}>✨ New here? Find your money archetype</Text>
+      </Pressable>
 
       {/* member tiles + coin overlay */}
       <View style={styles.tilesArea}>
@@ -176,8 +198,13 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center' },
   loading: { ...F.body, color: C.textMuted },
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: S.md, marginBottom: S.xl },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: S.sm },
+  iconBtn: { width: 38, height: 38, borderRadius: 999, backgroundColor: C.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.border },
+  iconGlyph: { fontSize: 18, color: C.text },
   potName: { ...F.title, color: C.text },
   goal: { ...F.caption, color: C.textMuted, marginTop: 2 },
+  quizLink: { alignItems: 'center', paddingVertical: S.sm, marginTop: -S.md, marginBottom: S.lg },
+  quizLinkText: { ...F.caption, color: C.accent },
   youChip: {
     flexDirection: 'row', alignItems: 'center', gap: S.xs,
     backgroundColor: C.card, borderRadius: 999, paddingVertical: S.sm, paddingHorizontal: S.md,

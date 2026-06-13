@@ -2,8 +2,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { C, S, F } from '@/lib/theme';
-import { DEMO } from '@/lib/constants';
 import { useSession } from '@/lib/session';
+import { useCurrentPot } from '@/lib/currentPot';
 import { usePotRealtime } from '@/hooks/usePotRealtime';
 import { gbp } from '@/lib/format';
 import { CATEGORY_LABEL } from '@/lib/avatars';
@@ -17,7 +17,8 @@ interface Card {
 export default function CoachScreen() {
   const insets = useSafeAreaInsets();
   const { userId, name } = useSession();
-  const { pot, members } = usePotRealtime(DEMO.POT_ID);
+  const { potId } = useCurrentPot();
+  const { pot, members } = usePotRealtime(potId);
   const me = members.find((m) => m.user_id === userId);
 
   const cards: Card[] = [];

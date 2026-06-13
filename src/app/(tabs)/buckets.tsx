@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { C, S, F } from '@/lib/theme';
-import { DEMO } from '@/lib/constants';
 import { useSession } from '@/lib/session';
+import { useCurrentPot } from '@/lib/currentPot';
 import { usePotRealtime } from '@/hooks/usePotRealtime';
 import { archetypeFor, CATEGORY_LABEL } from '@/lib/avatars';
 import { gbp } from '@/lib/format';
@@ -28,7 +28,8 @@ function Bar({ ratio, color }: { ratio: number; color: string }) {
 export default function BucketsScreen() {
   const insets = useSafeAreaInsets();
   const { userId } = useSession();
-  const { pot, members } = usePotRealtime(DEMO.POT_ID);
+  const { potId } = useCurrentPot();
+  const { pot, members } = usePotRealtime(potId);
   const me = members.find((m) => m.user_id === userId);
   const arche = archetypeFor(me?.user.archetype);
 
